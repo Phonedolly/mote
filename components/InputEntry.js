@@ -2,21 +2,36 @@ import styled from "styled-components";
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { v4 } from "uuid";
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
-const PopupMenuWithoutLogic = styled.div`
+const PopupMenuWithoutLogic = styled(motion.div)`
+  display: ${props => props.display ? 'none' : 'block'};
   position: fixed;
   top: ${props => `${props.position.top + 16}px`};
   left: ${props => `${props.position.left}px`};
   width: 6rem;
   padding: 0px 6px;
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
+  border-radius: 4px;
+  z-index: 999;
+  background-color: white;
 `
 export const PopupMenu = (props) => {
   return (
-    <PopupMenuWithoutLogic position={props.position} ref={props.innerRef}>
-      <p>asdfasdfadsfasdf</p>
-      <p>asdfadf</p>
-    </PopupMenuWithoutLogic>
+    <AnimatePresence>
+      <PopupMenuWithoutLogic key={v4()}
+        position={props.position}
+        display={props.hidden}
+        ref={props.innerRef}
+        initial={{ opacity: 0, scaleX: 0.5, scaleY: 0.5, transformOrigin: "left" }}
+        animate={{ opacity: 1, scaleX: 1, scaleY: 1, transition: { duration: 0.28, ease: "backInOut" } }}
+        exit={{ opacity: 0, scaleX: 0.5, scaleY: 0.5, transformOrigin: "left", transition: { duration: 0.28, ease: "backInOut" } }}>
+        <p>asdfasdfadsfasdf</p>
+        <p>asdfadf</p>
+      </PopupMenuWithoutLogic>
+    </AnimatePresence>
+
   );
 }
 
@@ -37,76 +52,68 @@ const _InputEntryWithoutLogic = styled.div`
   }
   `
 const _InputEntry = (props) => {
-  const refInputEntry = useRef(null);
   const refPopupMenu = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
-  const [lastInputChar, setLastInputChar] = useState("");
   const [rawText, setRawText] = useState("");
-  // console.log('received');
-
-
 
   function getPositionAfterOneChar(e) {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0).cloneRange();
     range.collapse(true);
-
     const rect = range.getClientRects()[0];
-    // console.log(rect);
     setCurCaretPos(prev => ({ ...prev, left: rect?.left || 0, top: rect?.top || 0 }))
-    setLastInputChar(e.key);
   }
 
   function getPositionAtNoChar(e) {
-    const rect = refInputEntry.current.getBoundingClientRect();
+    const rect = refPopupMenu.current?.getBoundingClientRect();
+    if (!rect) {
+      console.log('react is null');
+      return;
+    }
     setCurCaretPos(prev => ({ ...prev, left: rect?.left || 0, top: rect?.top || 0 }))
-    setLastInputChar(e.key);
   }
 
   useEffect(() => {
-    function determineShowPopup(e) {
-      const curPopupPos = refPopupMenu.current.getBoundingClientRect();
+    function determineClosePopup(e) {
       console.log(e);
-    }
-    addEventListener('click', (e) => {
-      if (showPopup === false && !refPopupMenu.current) {
+      if (showPopup === false || !refPopupMenu?.current) {
+        console.log(showPopup);
+        console.log(refPopupMenu.current);
+        console.log('somthing wrong');
         return
       }
       const curPopupPos = refPopupMenu.current?.getBoundingClientRect();
       if (!curPopupPos) {
+        console.log('!curPopupPos');
         return;
       }
       if (e.offsetX < curPopupPos.left
         || e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]
         || e.offsetY < curPopupPos.top
         || e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]) {
-        console.log('e.offsetX < curPopupPos.left');
-        console.log(e.offsetX, curPopupPos.left);
-        console.log(e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]);
-        console.log(e.offsetY < curPopupPos.top);
-        console.log(e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]);
         setShowPopup(false);
       }
-      // console.log(e);
-    });
-
-    return removeEventListener('click', determineShowPopup);
-  }, [showPopup])
-  useEffect(() => {
-    if (lastInputChar == "/") {
-      setShowPopup(true);
-    } else {
-      setShowPopup(false);
     }
-  }, [lastInputChar])
+    document.addEventListener('click', determineClosePopup);
+
+    return () => {
+      document.removeEventListener('click', determineClosePopup);
+    }
+  }, [showPopup]);
+
   return (
     <>
-      <_InputEntryWithoutLogic ref={refInputEntry} contentEditable onKeyDown={(e) => {
+      <_InputEntryWithoutLogic contentEditable onKeyDown={(e) => {
         if (rawText.length > 0) {
           getPositionAfterOneChar(e);
         } else {
           getPositionAtNoChar(e);
+        }
+        if (e.key === '/') {
+          setShowPopup(true);
+        } else {
+          setShowPopup(false);
         }
       }}
         onFocus={(e) => {
@@ -123,7 +130,8 @@ const _InputEntry = (props) => {
           setRawText(e.target.textContent);
           console.log(e.target.textContent);
         }} />
-      {showPopup === true ? <PopupMenu position={curCaretPos} innerRef={refPopupMenu} /> : null}
+      <PopupMenu position={curCaretPos} innerRef={refPopupMenu} hidden={!showPopup} />
+      {/* {showPopup === true ? null : null} */}
     </>
   )
 }
@@ -134,7 +142,7 @@ const InputEntryWithoutLogic = styled.div`
 const InputEntry = (props) => {
   return (
     <InputEntryWithoutLogic>
-      <_InputEntry {...props} />
+      <_InputEntry />
     </InputEntryWithoutLogic>
   )
 }
