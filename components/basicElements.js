@@ -141,67 +141,6 @@ export const ExportButton = () => {
   )
 }
 
-const InputEntryWithoutLogic = styled.div`
-  width: ${props => props.width ? props.width : 'auto'};
-  /* width:fit-content; */
-  height: 2.5rem;
-  border: none;
-  ::-webkit-textfield-decoration-container{
-    appearance:none;
-  }
-  border-bottom: 1px solid black;
-  font-size: 1rem;
-  padding: 0px 0px;
-  margin: 0px 0px;
-  :focus {
-    outline: none;
-  }
-  `
-const InputEntry = (props) => {
-  const refInputEntry = useRef(null);
-  const [showPopup, setShowPopup] = useState(false);
-  const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
-  console.log('received');
-  return (
-    <>
-      <InputEntryWithoutLogic ref={refInputEntry} contentEditable onKeyDown={(e) => {
-        console.log('start');
-        console.log(refInputEntry.current.selectionStart)
-        const selection = window.getSelection();
-        const range = selection.getRangeAt(0).cloneRange();
-        range.collapse(true);
-
-        const rect = range.getClientRects()[0];
-        console.log(rect);
-        setCurCaretPos(prev => ({ ...prev, left: rect?.left || 0, top: rect?.top || 0 }))
-        if (e.key == "/") {
-          setShowPopup(true);
-        } else {
-          setShowPopup(false);
-        }
-      }} />
-      {showPopup === true ? <PopupMenu position={curCaretPos} /> : null}
-    </>
-
-  )
-}
-
-const InputEntryWrapperWithoutLogic = styled.div`
-  border: 1px solid black;
-`
-export const InputEntryWrapper = (props) => {
-  const refInputWrapper = useRef(null);
-
-
-
-
-  return (
-    <InputEntryWrapperWithoutLogic ref={refInputWrapper}>
-      <InputEntry {...props} />
-    </InputEntryWrapperWithoutLogic>
-  )
-}
-
 const SpacerWithoutLogic = styled.span`
   visibility: hidden;
 `
@@ -209,21 +148,4 @@ export const Spacer = (props) => {
   return (
     <SpacerWithoutLogic id="spacer" ref={props.innerRef} />
   )
-}
-
-
-const PopupMenuWithoutLogic = styled.div`
-  position: fixed;
-  top: ${props => `${props.position.top + 16}px`};
-  left: ${props => `${props.position.left}px`};
-  width: 6rem;
-  padding: 0px 6px;
-  box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
-`
-export const PopupMenu = (props) => {
-  return (
-    <PopupMenuWithoutLogic position={props.position}>
-      asdfsdfsdfkl;askf;las;
-    </PopupMenuWithoutLogic>
-  );
 }
