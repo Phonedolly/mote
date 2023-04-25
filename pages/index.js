@@ -1,64 +1,20 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
-import { CurrentTitle, Dots, ExportButton, InputEntry, InputEntryWrapper, LastEdit, LeftTitleMenuContainer, PopupMenu, RightTitleMenuContainer, SideBar, SideBarToggleButton, Spacer, Title, TitleBar } from '@/components/basicElements'
+import { CurrentTitle, Dots, ExportButton, LastEdit, LeftTitleMenuContainer, PopupMenu, RightTitleMenuContainer, SideBar, SideBarToggleButton, Spacer, Title, TitleBar } from '@/components/basicElements'
 import { Container, ContentContainer, } from '@/components/container'
+import InputEntry from '@/components/InputEntry';
 import { useEffect, useRef, useState } from 'react'
 import { v4 } from "uuid";
 import { useAnimate } from 'framer-motion'
 
 export default function Home() {
-  const refTest = useRef(null);
-  const refInputEntry = useRef(null);
-  const inputPosRef = useRef(null);
   const [showSideBar, setShowSideBar] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Current Title");
   const [lastEdit, setLastEdit] = useState(new Date());
-  const [showPopup, setShowPopup] = useState(false);
-  const [inputStream, setInputStrem] = useState("");
-  const [inputMode, setInputMode] = useState(true);
-  const [curContent, setCurContent] = useState("");
-  const [curCharPos, setCurCharPos] = useState(0);
-  const [cur, setCur] = useState({ curLine: 0, curInline: 0 });
   const [dom, setDom] = useState([<div key={v4()}></div>]);
-  const [inputScope, animateInput] = useAnimate();
-  const [pastInputWidth, setPastInputWidth] = useState("0px");
-  const [curBlockInfo, setCurBlockInfo] = useState({ line: 0, width: 0, height: 0 });
+  const [cur, setCur] = useState({curLine: 0})
 
-  // useEffect(() => {
-  //   setPastInputWidth(inputScope.current.style.width);
-  // }, [])
-
-  // useEffect(() => {
-  //   addEventListener('keydown', (e) => {
-  //     console.log('called');
-  //     if (curInput.current) {
-  //       console.log(curInput.current);
-  //       setCurCharPos(curInput.current.value.length);
-  //       console.log(curInput.current.value);
-  //       console.log('updated');
-  //     }
-  //   })
-  // }, [])
-  // // useEffect(()=>{
-
-  // // }, [inputPosRef.current.offsetLeft, inputPosRef.current.offsetTop]);
-  // useEffect(() => {
-  //   addEventListener('keydown', (e) => {
-  //     if (e.key === '/') {
-  //       setShowPopup(true);
-  //       // console.log(inputPosRef.current.selectionStart)
-  //     }
-  //   })
-  // }, []);
-  useEffect(() => {
-    // addEventListener('')
-  }, [])
-  useEffect(() => {
-    addEventListener('selectionchange', (e) => {
-      console.log(e.target.selectionStart);
-    })
-  }, [])
   return (
     <>
       <Head key={v4()}>
@@ -83,29 +39,10 @@ export default function Home() {
           {dom.map((e, i) => {
             if (i == cur.curLine)
             {
-              return <InputEntryWrapper key={v4()} innerRef={inputScope} curBlockInfo={curBlockInfo} />
+              return <InputEntry key={v4()}/>
             }
-              // return (
-              //   <div key={v4()}>
-  
-              //     {/* <Spacer innerRef={inputPosRef} key={v4()} />
-              //     {showPopup ? <PopupMenu position={{
-              //       top: (() => {
-              //         const target = inputPosRef;
-              //         return target.current.getBoundingClientRect().y
-              //       })(),
-              //       left: (() => {
-              //         const target = inputPosRef;
-              //         console.log('left', target.current.getBoundingClientRect().x + 2)
-              //         return target.current.getBoundingClientRect().x + 16
-              //       })()
-              //     }} key={v4()} /> : null} */}
-              //   </div>)
-
-            // document.las
             return e;
           })}
-        열릴곳: {curBlockInfo.line} {curBlockInfo.width} {curBlockInfo.height}
         </ContentContainer>
 
       </Container>
