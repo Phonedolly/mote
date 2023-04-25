@@ -9,11 +9,61 @@ import { v4 } from "uuid";
 import { useAnimate } from 'framer-motion'
 
 export default function Home() {
+  const refContentContainer = useRef(null);
   const [showSideBar, setShowSideBar] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Current Title");
   const [lastEdit, setLastEdit] = useState(new Date());
-  const [dom, setDom] = useState([<div key={v4()}></div>]);
-  const [cur, setCur] = useState({curLine: 0})
+  const [dom, setDom] = useState({ rawData: [""], curLine: { value: 0, lastArrowAction: "" } });
+  // const [curLine, setCurLine] = useState({ value: 0, lastAction: "" });
+  const [caret, setCaret] = useState(1);
+
+  useEffect(() => {
+    const {value} = dom.curLine;
+    // refContentContainer.current.children[value]?.firstChild?.focus();
+  }, [dom])
+
+  // useEffect(() => {
+  //   const { value, lastArrowAction } = dom.curLine;
+  //   console.log(`curLine is changed to ${value}`)
+  //   // document.getElementById('aa').
+  //   if (lastArrowAction === "DOWN" || lastArrowAction === "ENTER") {
+  //     refContentContainer.current.children[value].firstChild?.focus();
+  //   }
+
+  //   if (lastArrowAction === "UP") {
+  //     console.log('value', value);
+  //     const target = refContentContainer.current.childNodes[value].firstChild;
+  //     const selection = window.getSelection();
+  //     const range = document.createRange();
+  //     // move caret to the end of the line
+  //     range.setStart(target.childNodes[0], 2)
+  //     range.collapse(true);
+
+  //     selection.removeAllRanges();
+  //     selection.addRange(range);
+
+  //     target.focus();
+  //     // select the range
+  //     console.log('worked');
+  //   }
+  //   // refContentContainer.current.children[curLine].focus();
+  // }, [dom]);
+
+  // useEffect(() => {
+  //   function handleKeydown(e) {
+  //     if (e.key == "ArrowDown") {
+  //       setCurLine(curLine + 1)
+  //     }
+  //     if (e.key == "ArrowUp") {
+  //       setCurLine(curLine - 1)
+  //     }
+  //   }
+  //   document.addEventListener("keydown", handleKeydown);
+
+  //   return () => {
+  //     document.removeEventListener("keydown", handleKeydown);
+  //   }
+  // }, [curLine])
 
   return (
     <>
@@ -35,13 +85,20 @@ export default function Home() {
             <Dots />
           </RightTitleMenuContainer>
         </TitleBar>
-        <ContentContainer>
-          {dom.map((e, i) => {
-            if (i == cur.curLine)
-            {
-              return <InputEntry key={v4()}/>
+        <ContentContainer ref={refContentContainer}>
+          {dom.rawData.map((rawText, i) => {
+            if (i == dom.curLine.value) {
+              return (
+                <InputEntry
+                  key={v4()}
+                  dom={dom}
+                  setDom={setDom}
+                  caret={caret}
+                  lineNo={i}>
+                  {rawText}
+                </InputEntry>)
             }
-            return e;
+            return <div key={v4()}>{rawText}</div>;
           })}
         </ContentContainer>
 

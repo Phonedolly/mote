@@ -6,7 +6,7 @@ import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
 
 const PopupMenuWithoutLogic = styled(motion.div)`
-  display: ${props => props.display ? 'none' : 'block'};
+  display: ${props => props.show === "true" ? 'block' : 'none'};
   position: fixed;
   top: ${props => `${props.position.top + 16}px`};
   left: ${props => `${props.position.left}px`};
@@ -22,7 +22,7 @@ export const PopupMenu = (props) => {
     <AnimatePresence>
       <PopupMenuWithoutLogic key={v4()}
         position={props.position}
-        display={props.hidden}
+        show={props.showPopup.toString()}
         ref={props.innerRef}
         initial={{ opacity: 0, scaleX: 0.5, scaleY: 0.5, transformOrigin: "left" }}
         animate={{ opacity: 1, scaleX: 1, scaleY: 1, transition: { duration: 0.28, ease: "backInOut" } }}
@@ -51,11 +51,12 @@ const _InputEntryWithoutLogic = styled.div`
     outline: none;
   }
   `
-const _InputEntry = (props) => {
+const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
   const refPopupMenu = useRef(null);
+  const ref_InputEntry = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
-  const [rawText, setRawText] = useState("");
+  const [rawText, setRawText] = useState(children);
 
   function getPositionAfterOneChar(e) {
     const selection = window.getSelection();
@@ -66,9 +67,9 @@ const _InputEntry = (props) => {
   }
 
   function getPositionAtNoChar(e) {
-    const rect = refPopupMenu.current?.getBoundingClientRect();
+    const rect = ref_InputEntry.current?.getBoundingClientRect();
     if (!rect) {
-      console.log('react is null');
+      console.log('rect is null');
       return;
     }
     setCurCaretPos(prev => ({ ...prev, left: rect?.left || 0, top: rect?.top || 0 }))
@@ -102,20 +103,87 @@ const _InputEntry = (props) => {
     }
   }, [showPopup]);
 
+  useEffect(() => {
+    ref_InputEntry.current.innerText = children
+
+    const target = ref_InputEntry.current;
+    if (!target.childNodes|| !target.childNodes[0]) {
+      return;
+    }
+    console.log(target.childNodes[0])
+    // console.log(target)
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.setStart(target.childNodes[0], 2);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    console.log('worked');
+    // target.focus();
+  }, [children, caret])
+
   return (
     <>
-      <_InputEntryWithoutLogic contentEditable onKeyDown={(e) => {
-        if (rawText.length > 0) {
-          getPositionAfterOneChar(e);
-        } else {
-          getPositionAtNoChar(e);
-        }
-        if (e.key === '/') {
-          setShowPopup(true);
-        } else {
-          setShowPopup(false);
-        }
-      }}
+      <_InputEntryWithoutLogic
+        contentEditable
+        ref={ref_InputEntry}
+        onKeyDown={(e) => {
+          if (rawText.length > 0) {
+            getPositionAfterOneChar(e);
+          } else {
+            getPositionAtNoChar(e);
+          }
+          if (e.key === '/') {
+            setShowPopup(true);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const container = ref_InputEntry.current.parentElement.parentElement;
+            // ref_InputEntry.current.parentElement.parentElement.append(document.createElement('a'));
+
+            setDom(prev => ({
+              rawData: prev.rawData
+                .map((e, i) => {
+                  if (i === lineNo) {
+                    return ref_InputEntry.current.innerText
+                  }
+
+                  return e;
+                }).concat(""),
+              curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" }
+            }));
+            // setShowPopup(true);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            if (lineNo === 0) {
+              return;
+            }
+            setDom(prev => ({
+              rawData: prev.rawData.map((e, i) => {
+                if (i === lineNo) {
+                  return ref_InputEntry.current.innerText
+                }
+
+                return e;
+              }),
+              curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" }
+            }));
+          } else if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setDom(prev => ({
+              rawData: prev.rawData.map((e, i) => {
+                if (i === lineNo) {
+                  return ref_InputEntry.current.innerText
+                }
+
+                return e;
+              }),
+              curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
+            }));
+          } else {
+            setShowPopup(false);
+          }
+
+        }}
         onFocus={(e) => {
           if (showPopup === true) {
             return;
@@ -128,10 +196,8 @@ const _InputEntry = (props) => {
         }
         } onInput={(e) => {
           setRawText(e.target.textContent);
-          console.log(e.target.textContent);
         }} />
-      <PopupMenu position={curCaretPos} innerRef={refPopupMenu} hidden={!showPopup} />
-      {/* {showPopup === true ? null : null} */}
+      <PopupMenu position={curCaretPos} innerRef={refPopupMenu} showPopup={showPopup} />
     </>
   )
 }
@@ -142,7 +208,7 @@ const InputEntryWithoutLogic = styled.div`
 const InputEntry = (props) => {
   return (
     <InputEntryWithoutLogic>
-      <_InputEntry />
+      <_InputEntry {...props} />
     </InputEntryWithoutLogic>
   )
 }
