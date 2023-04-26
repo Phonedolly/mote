@@ -106,20 +106,29 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
   useEffect(() => {
     ref_InputEntry.current.innerText = children
 
-    const target = ref_InputEntry.current;
-    if (!target.childNodes|| !target.childNodes[0]) {
+    if (children.length === 0 || !children) {
+      console.log(111);
+      ref_InputEntry.current.focus();
       return;
     }
-    console.log(target.childNodes[0])
-    // console.log(target)
+
+    const target = ref_InputEntry.current;
+    if (!target.childNodes || !target.childNodes[0]) {
+      return;
+    }
+    console.log('start');
     const selection = window.getSelection();
     const range = document.createRange();
-    range.setStart(target.childNodes[0], 2);
+
+    console.log(selection.anchorNode);
+
+
+    range.setStart(target.childNodes[0], 0);
     range.collapse(true);
     selection.removeAllRanges();
     selection.addRange(range);
     console.log('worked');
-    // target.focus();
+    target.focus();
   }, [children, caret])
 
   return (
@@ -138,8 +147,6 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
           } else if (e.key === 'Enter') {
             e.preventDefault();
             const container = ref_InputEntry.current.parentElement.parentElement;
-            // ref_InputEntry.current.parentElement.parentElement.append(document.createElement('a'));
-
             setDom(prev => ({
               rawData: prev.rawData
                 .map((e, i) => {
@@ -169,6 +176,22 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
             }));
           } else if (e.key === "ArrowDown") {
             e.preventDefault();
+            // document.next
+            if (!ref_InputEntry.current.parentElement.nextSibling) {
+              console.log(333)
+              setDom(prev => ({
+                rawData: prev.rawData
+                  .map((e, i) => {
+                    if (i === lineNo) {
+                      return ref_InputEntry.current.innerText
+                    }
+
+                    return e;
+                  }).concat(""),
+                curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
+              }));
+              return;
+            }
             setDom(prev => ({
               rawData: prev.rawData.map((e, i) => {
                 if (i === lineNo) {
@@ -179,6 +202,7 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
               }),
               curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
             }));
+            return;
           } else {
             setShowPopup(false);
           }

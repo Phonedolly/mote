@@ -17,11 +17,6 @@ export default function Home() {
   // const [curLine, setCurLine] = useState({ value: 0, lastAction: "" });
   const [caret, setCaret] = useState(1);
 
-  useEffect(() => {
-    const {value} = dom.curLine;
-    // refContentContainer.current.children[value]?.firstChild?.focus();
-  }, [dom])
-
   // useEffect(() => {
   //   const { value, lastArrowAction } = dom.curLine;
   //   console.log(`curLine is changed to ${value}`)
@@ -87,7 +82,8 @@ export default function Home() {
         </TitleBar>
         <ContentContainer ref={refContentContainer}>
           {dom.rawData.map((rawText, i) => {
-            if (i == dom.curLine.value) {
+            console.log('i', i, 'value', dom.curLine.value);
+            if (i === dom.curLine.value) {
               return (
                 <InputEntry
                   key={v4()}
@@ -98,7 +94,7 @@ export default function Home() {
                   {rawText}
                 </InputEntry>)
             }
-            return <div key={v4()}>{rawText}</div>;
+            return <div key={v4()} lineno={i} onClick={() => { setDom({ ...dom, curLine: { value: i, lastArrowAction: undefined } }) }}>{rawText.length === 0 ? <br /> : rawText}</div>;
           })}
         </ContentContainer>
 
