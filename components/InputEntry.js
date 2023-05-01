@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { v4 } from "uuid";
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
 
@@ -51,12 +51,15 @@ const _InputEntryWithoutLogic = styled.div`
     outline: none;
   }
   `
-const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
+const _InputEntry = (props) => {
+  const { dom, setDom, lineNo, setIntermediateData, children, setCurrentRawData, currentRawData, setLastEvent } = props;
   const refPopupMenu = useRef(null);
   const ref_InputEntry = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
-  const [rawText, setRawText] = useState(children);
+  const [rawText, setRawText] = useState(currentRawData);
+  const [initialText, setInitialText] = useState(children);
+  const [caret, setCaret] = useState(1);
 
   function getPositionAfterOneChar(e) {
     const selection = window.getSelection();
@@ -77,7 +80,6 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
 
   useEffect(() => {
     function determineClosePopup(e) {
-      console.log(e);
       if (showPopup === false || !refPopupMenu?.current) {
         console.log(showPopup);
         console.log(refPopupMenu.current);
@@ -93,7 +95,7 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
         || e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]
         || e.offsetY < curPopupPos.top
         || e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]) {
-        setShowPopup(false);
+        setShowPopup(prev => false);
       }
     }
     document.addEventListener('click', determineClosePopup);
@@ -104,37 +106,73 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
   }, [showPopup]);
 
   useEffect(() => {
-    ref_InputEntry.current.innerText = children
-
-    if (children.length === 0 || !children) {
-      console.log(111);
-      ref_InputEntry.current.focus();
-      return;
+    function save(actionType) {
+      setDom(prev => ({
+        rawData: prev.rawData.map((e, i) => {
+          if (i === lineNo) {
+            return rawText;
+          }
+          else {
+            return e;
+          }
+        }),
+        curLine: { value: lineNo, type: actionType },
+      }))
     }
-
-    const target = ref_InputEntry.current;
-    if (!target.childNodes || !target.childNodes[0]) {
-      return;
+    /*
+    https://stackoverflow.com/questions/32553158/detect-click-outside-react-component
+    */
+    function handleClickOutside(event) {
+      if (ref_InputEntry.current && !ref_InputEntry.current.contains(event.target)) {
+        alert("You clicked outside of me!");
+        // setIntermediateData(({ lastCurLine: lineNo, lastInput: ref_InputEntry.current.innerText }))
+        // save();
+        setCurrentRawData(rawText);
+      }
     }
-    console.log('start');
-    const selection = window.getSelection();
-    const range = document.createRange();
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    }
+  }, [lineNo, setDom, rawText, setCurrentRawData])
 
-    console.log(selection.anchorNode);
+  // useEffect(() => {
+  //   ref_InputEntry.current.innerText = children
+  // }, [children])
 
 
-    range.setStart(target.childNodes[0], 0);
-    range.collapse(true);
-    selection.removeAllRanges();
-    selection.addRange(range);
-    console.log('worked');
-    target.focus();
-  }, [children, caret])
+  // useEffect(() => {
+  //   // ref_InputEntry.current.innerText = rawText;
+  //   if (rawText.length === 0) {
+  //     console.log(111);
+  //     // ref_InputEntry.current.focus();
+  //     return;
+  //   }
+
+  //   const target = ref_InputEntry.current;
+  //   if (!target.childNodes || !target.childNodes[0]) {
+  //     return;
+  //   }
+  //   console.log('start');
+  //   const selection = window.getSelection();
+  //   const range = document.createRange();
+
+  //   // console.log(selection.anchorNode);
+
+
+  //   range.setStart(target.childNodes[0], 1);
+  //   range.collapse(true);
+  //   selection.removeAllRanges();
+  //   selection.addRange(range);
+  //   console.log('worked');
+  //   target.focus();
+  // }, [rawText])
 
   return (
     <>
       <_InputEntryWithoutLogic
         contentEditable
+        suppressContentEditableWarning
         ref={ref_InputEntry}
         onKeyDown={(e) => {
           if (rawText.length > 0) {
@@ -142,71 +180,13 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
           } else {
             getPositionAtNoChar(e);
           }
-          if (e.key === '/') {
-            setShowPopup(true);
-          } else if (e.key === 'Enter') {
-            e.preventDefault();
-            const container = ref_InputEntry.current.parentElement.parentElement;
-            setDom(prev => ({
-              rawData: prev.rawData
-                .map((e, i) => {
-                  if (i === lineNo) {
-                    return ref_InputEntry.current.innerText
-                  }
 
-                  return e;
-                }).concat(""),
-              curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" }
-            }));
-            // setShowPopup(true);
-          } else if (e.key === "ArrowUp") {
-            e.preventDefault();
-            if (lineNo === 0) {
-              return;
-            }
-            setDom(prev => ({
-              rawData: prev.rawData.map((e, i) => {
-                if (i === lineNo) {
-                  return ref_InputEntry.current.innerText
-                }
-
-                return e;
-              }),
-              curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" }
-            }));
-          } else if (e.key === "ArrowDown") {
-            e.preventDefault();
-            // document.next
-            if (!ref_InputEntry.current.parentElement.nextSibling) {
-              console.log(333)
-              setDom(prev => ({
-                rawData: prev.rawData
-                  .map((e, i) => {
-                    if (i === lineNo) {
-                      return ref_InputEntry.current.innerText
-                    }
-
-                    return e;
-                  }).concat(""),
-                curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
-              }));
-              return;
-            }
-            setDom(prev => ({
-              rawData: prev.rawData.map((e, i) => {
-                if (i === lineNo) {
-                  return ref_InputEntry.current.innerText
-                }
-
-                return e;
-              }),
-              curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
-            }));
-            return;
-          } else {
-            setShowPopup(false);
+          if (e.key == '/') {
+            setShowPopup(prev => true);
+          } else if (e.key == 'Enter' || e.key == "ArrowUp" || e.key == "ArrowDown") {
+            setShowPopup(prev => false);
+            setLastEvent(prev => ({ event: e, rawData: e.target.innerText }));
           }
-
         }}
         onFocus={(e) => {
           if (showPopup === true) {
@@ -218,10 +198,16 @@ const _InputEntry = ({ dom, setDom, lineNo, caret, children }) => {
             getPositionAtNoChar(e);
           }
         }
-        } onInput={(e) => {
-          setRawText(e.target.textContent);
-        }} />
-      <PopupMenu position={curCaretPos} innerRef={refPopupMenu} showPopup={showPopup} />
+        }
+        onInput={(e) => {
+          console.log(e);
+          setRawText(e.target.innerText);
+          // console.log(e.target.innerText);
+          // setRawText(e.target.innerText);
+          // setIntermediateData(prev => ({ lastCurLine: lineNo, lastInput: e.target.innerText }))
+        }}
+      >{rawText}</_InputEntryWithoutLogic>
+      < PopupMenu position={curCaretPos} innerRef={refPopupMenu} showPopup={showPopup} />
     </>
   )
 }

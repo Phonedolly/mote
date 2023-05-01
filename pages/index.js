@@ -13,9 +13,14 @@ export default function Home() {
   const [showSideBar, setShowSideBar] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Current Title");
   const [lastEdit, setLastEdit] = useState(new Date());
-  const [dom, setDom] = useState({ rawData: [""], curLine: { value: 0, lastArrowAction: "" } });
+  const [dom, setDom] = useState({ blockData: [""], curLine: { value: 0, lastArrowAction: "" } });
   // const [curLine, setCurLine] = useState({ value: 0, lastAction: "" });
-  const [caret, setCaret] = useState(1);
+  const [clickOutsideOfblock, setClickOutsideOfblock] = useState(false);
+  const [newestLine, setNewestLine] = useState(0);
+
+  // useState(() => {
+  //   console.log(intermediateData);
+  // }, [intermediateData])
 
   // useEffect(() => {
   //   const { value, lastArrowAction } = dom.curLine;
@@ -42,7 +47,7 @@ export default function Home() {
   //     console.log('worked');
   //   }
   //   // refContentContainer.current.children[curLine].focus();
-  // }, [dom]);
+  // }, [dom.curLine]);
 
   // useEffect(() => {
   //   function handleKeydown(e) {
@@ -59,6 +64,28 @@ export default function Home() {
   //     document.removeEventListener("keydown", handleKeydown);
   //   }
   // }, [curLine])
+
+  // useEffect(() => {
+  //   const { lastCurLine, data } = intermediateData;
+  //   console.log('lastCurLine', lastCurLine, 'dom.curLine.value', dom.curLine.value);
+  //   if (lastCurLine !== dom.curLine.value) {
+  //     const { rawData, curLine } = dom;
+  //     console.log(44)
+  //     setDom({
+  //       rawData: rawData.map((rawText, i) => {
+  //         if (i === lastCurLine) {
+  //           return data;
+  //         }
+  //         return rawText;
+  //       }),
+  //       curLine: curLine
+  //     })
+  //     setIntermediateData({ ...intermediateData, lastCurLine: dom.curLine.value })
+  //     // refContentContainer.current.children[lastCurLine].innerText = data;
+  //   }
+
+  // }, [intermediateData]);
+
 
   return (
     <>
@@ -80,24 +107,7 @@ export default function Home() {
             <Dots />
           </RightTitleMenuContainer>
         </TitleBar>
-        <ContentContainer ref={refContentContainer}>
-          {dom.rawData.map((rawText, i) => {
-            console.log('i', i, 'value', dom.curLine.value);
-            if (i === dom.curLine.value) {
-              return (
-                <InputEntry
-                  key={v4()}
-                  dom={dom}
-                  setDom={setDom}
-                  caret={caret}
-                  lineNo={i}>
-                  {rawText}
-                </InputEntry>)
-            }
-            return <div key={v4()} lineno={i} onClick={() => { setDom({ ...dom, curLine: { value: i, lastArrowAction: undefined } }) }}>{rawText.length === 0 ? <br /> : rawText}</div>;
-          })}
-        </ContentContainer>
-
+        <ContentContainer dom={dom} setDom={setDom} />
       </Container>
     </>
   )
