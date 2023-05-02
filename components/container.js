@@ -27,74 +27,20 @@ export const ContentContainer = (props) => {
   const [curLineNo, setCurLineNo] = useState(0);
   const [lastEvent, setLastEvent] = useState({});
 
-  useEffect(() => {
-    const e = lastEvent?.event;
-    switch (lastEvent.event?.key) {
-      case "Enter":
-        e.preventDefault();
-        /* Save current value and generate new div, and go to it */
-        setDom(prev => ({
-          blockData: prev.blockData
-            .map((el, i) => {
-              if (i === prev.curLine.value) {
-                return lastEvent.rawData
-              }
-              return el;
-            }).concat(""),
-          curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" }
-        }));
-        setCurLineNo(prev => prev + 1);
-        break;
-      case "ArrowUp":
-        e.preventDefault();
-        if (dom.curLine.value === 0) {
-          return;
-        }
-        setDom(prev => ({
-          blockData: prev.blockData.map((el, i) => {
-            if (i === prev.curLine.value) {
-              return lastEvent.rawData
-            }
-            return el;
-          }),
-          curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" }
-        }));
-        setCurLineNo(prev => prev - 1);
-        break;
-      case "ArrowDown":
-        e.preventDefault();
-        setDom(prev => ({
-          blockData: prev.blockData.map((el, i) => {
-            if (i === prev.curLine.value) {
-              return lastEvent.rawData
-            }
-            return el;
-          }),
-          curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
-        }));
-        setCurLineNo(prev => prev + 1);
-        break;
-      default:
-        break;
-    }
-  }, [lastEvent, setDom])
-
-  useEffect(() => {
-
-  }, [dom, curLineNo])
   return (
     <ContentContainerWithoutLogic ref={refContentContainer}>
-      {dom.blockData.map((rawText, i) => {
-        if (i === curLineNo) {
+      {dom.blockData.map((rawData, i) => {
+        if (i === dom.curLine.value) {
           return (
             <InputEntry
               key={v4()}
               dom={dom}
               setDom={setDom}
               lineNo={i}
-              currentRawData={rawText}
+              currentRawData={rawData}
               setCurrentRawData={setCurrentRawData}
               setLastEvent={setLastEvent}
+              ref_InputEntry={ref_InputEntry}
             >
             </InputEntry>)
         }
@@ -103,7 +49,16 @@ export const ContentContainer = (props) => {
             <div
               key={v4()}
               lineno={i}
-            >{rawText.length === 0 ? <br /> : rawText}</div>
+              onClick={(e) => {
+                /* save current input block and set new block line */
+                setDom(prev => ({
+                  blockData: prev.blockData.map((el, j) => (j === dom.curLine.value ? prev.blockData[i] = ref_InputEntry.current.innerText : el
+                  )),
+                  curLine: { value: i },
+                }))
+              }
+              }
+            >{rawData.length === 0 ? <br /> : rawData}</div>
           )
         }
       })}

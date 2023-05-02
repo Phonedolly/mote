@@ -52,12 +52,13 @@ const _InputEntryWithoutLogic = styled.div`
   }
   `
 const _InputEntry = (props) => {
-  const { dom, setDom, lineNo, setIntermediateData, children, setCurrentRawData, currentRawData, setLastEvent } = props;
+  const { dom, setDom, lineNo, setIntermediateData, children, setCurrentRawData, currentRawData, setLastEvent, ref_InputEntry } = props;
   const refPopupMenu = useRef(null);
-  const ref_InputEntry = useRef(null);
+  // const ref_InputEntry = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
   const [rawText, setRawText] = useState(currentRawData);
+  const [innerText, setInnerText] = useState(currentRawData);
   const [initialText, setInitialText] = useState(children);
   const [caret, setCaret] = useState(1);
 
@@ -78,63 +79,65 @@ const _InputEntry = (props) => {
     setCurCaretPos(prev => ({ ...prev, left: rect?.left || 0, top: rect?.top || 0 }))
   }
 
-  useEffect(() => {
-    function determineClosePopup(e) {
-      if (showPopup === false || !refPopupMenu?.current) {
-        console.log(showPopup);
-        console.log(refPopupMenu.current);
-        console.log('somthing wrong');
-        return
-      }
-      const curPopupPos = refPopupMenu.current?.getBoundingClientRect();
-      if (!curPopupPos) {
-        console.log('!curPopupPos');
-        return;
-      }
-      if (e.offsetX < curPopupPos.left
-        || e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]
-        || e.offsetY < curPopupPos.top
-        || e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]) {
-        setShowPopup(prev => false);
-      }
-    }
-    document.addEventListener('click', determineClosePopup);
+  // useEffect(() => {
+  //   function determineClosePopup(e) {
+  //     if (showPopup === false || !refPopupMenu?.current) {
+  //       console.log(showPopup);
+  //       console.log(refPopupMenu.current);
+  //       console.log('somthing wrong');
+  //       return
+  //     }
+  //     const curPopupPos = refPopupMenu.current?.getBoundingClientRect();
+  //     if (!curPopupPos) {
+  //       console.log('!curPopupPos');
+  //       return;
+  //     }
+  //     if (e.offsetX < curPopupPos.left
+  //       || e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]
+  //       || e.offsetY < curPopupPos.top
+  //       || e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]) {
+  //       setShowPopup(prev => false);
+  //     }
+  //   }
 
-    return () => {
-      document.removeEventListener('click', determineClosePopup);
-    }
-  }, [showPopup]);
+  //   document.addEventListener('click', determineClosePopup);
+
+  //   return () => {
+  //     document.removeEventListener('click', determineClosePopup);
+  //   }
+  // }, [showPopup]);
 
   useEffect(() => {
-    function save(actionType) {
-      setDom(prev => ({
-        rawData: prev.rawData.map((e, i) => {
-          if (i === lineNo) {
-            return rawText;
-          }
-          else {
-            return e;
-          }
-        }),
-        curLine: { value: lineNo, type: actionType },
-      }))
-    }
+    // function save(actionType) {
+    //   setDom(prev => ({
+    //     blockData: prev.blockData.map((e, i) => {
+    //       if (i === lineNo) {
+    //         return innerText;
+    //       }
+    //       else {
+    //         return e;
+    //       }
+    //     }),
+    //     curLine: { value: lineNo, type: "ARROW" },
+    //   }))
+    // }
     /*
     https://stackoverflow.com/questions/32553158/detect-click-outside-react-component
     */
     function handleClickOutside(event) {
       if (ref_InputEntry.current && !ref_InputEntry.current.contains(event.target)) {
-        alert("You clicked outside of me!");
+        // alert("You clicked outside of me!");
         // setIntermediateData(({ lastCurLine: lineNo, lastInput: ref_InputEntry.current.innerText }))
         // save();
-        setCurrentRawData(rawText);
+        setShowPopup(false);
+        // setCurrentRawData(rawText);
       }
     }
     document.addEventListener('click', handleClickOutside);
     return () => {
       document.removeEventListener('click', handleClickOutside);
     }
-  }, [lineNo, setDom, rawText, setCurrentRawData])
+  }, [lineNo, setDom, rawText])
 
   // useEffect(() => {
   //   ref_InputEntry.current.innerText = children
@@ -180,12 +183,64 @@ const _InputEntry = (props) => {
           } else {
             getPositionAtNoChar(e);
           }
-
           if (e.key == '/') {
             setShowPopup(prev => true);
-          } else if (e.key == 'Enter' || e.key == "ArrowUp" || e.key == "ArrowDown") {
+            return;
+          }
+          setShowPopup(false);
+          if (e.key == 'Enter' || e.key == "ArrowUp" || e.key == "ArrowDown") {
             setShowPopup(prev => false);
-            setLastEvent(prev => ({ event: e, rawData: e.target.innerText }));
+            const newRawText = e.target.innerText;
+            switch (e.key) {
+              case "Enter":
+                e.preventDefault();
+                /* Save current value and generate new div, and go to it */
+                setDom(prev => ({
+                  blockData: prev.blockData
+                    .map((el, i) => {
+                      if (i === prev.curLine.value) {
+                        return newRawText
+                      }
+                      return el;
+                    }).concat(""),
+                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" }
+                }));
+                break;
+              case "ArrowUp":
+                e.preventDefault();
+                /* check if first line */
+                if (dom.curLine.value === 0) {
+                  return;
+                }
+                setDom(prev => ({
+                  blockData: prev.blockData.map((el, i) => {
+                    if (i === prev.curLine.value) {
+                      return newRawText
+                    }
+                    return el;
+                  }),
+                  curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" }
+                }));
+                break;
+              case "ArrowDown":
+                e.preventDefault();
+                /* check if last line */
+                if (dom.curLine.value === dom.blockData.length - 1) {
+                  return;
+                }
+                setDom(prev => ({
+                  blockData: prev.blockData.map((el, i) => {
+                    if (i === prev.curLine.value) {
+                      return newRawText
+                    }
+                    return el;
+                  }),
+                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
+                }));
+                break;
+              default:
+                break;
+            }
           }
         }}
         onFocus={(e) => {
@@ -201,7 +256,7 @@ const _InputEntry = (props) => {
         }
         onInput={(e) => {
           console.log(e);
-          setRawText(e.target.innerText);
+          setInnerText(e.target.innerText);
           // console.log(e.target.innerText);
           // setRawText(e.target.innerText);
           // setIntermediateData(prev => ({ lastCurLine: lineNo, lastInput: e.target.innerText }))
