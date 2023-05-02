@@ -1,10 +1,10 @@
 import styled from "styled-components";
-import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { v4 } from "uuid";
-import { memo, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
 import getCaretPosition from "@/utils/getCaretPosition";
+import { textBlockInitValue } from "@/etc/initValues";
 
 const PopupMenuWithoutLogic = styled(motion.div)`
   display: ${props => props.show === "true" ? 'block' : 'none'};
@@ -16,7 +16,7 @@ const PopupMenuWithoutLogic = styled(motion.div)`
   box-shadow: rgba(0, 0, 0, 0.35) 0px 5px 15px;
   border-radius: 4px;
   z-index: 999;
-  background-color: white;
+  background-color: green;
 `
 export const PopupMenu = (props) => {
   return (
@@ -37,7 +37,8 @@ export const PopupMenu = (props) => {
 }
 
 const _InputEntryWithoutLogic = styled.div`
-  width: ${props => props.width ? props.width : 'auto'};
+  /* width: ${props => props.width ? props.width : 'auto'}; */
+  width: 100%;
   /* width:fit-content; */
   height: 2.5rem;
   border: none;
@@ -51,17 +52,16 @@ const _InputEntryWithoutLogic = styled.div`
   :focus {
     outline: none;
   }
+  background-color: ${props => props.dom.curLine.value === props.lineNo ? "red" : "blue"};
   `
 const _InputEntry = (props) => {
-  const { dom, setDom, lineNo, setIntermediateData, children, setCurrentRawData, currentRawData, setLastEvent, ref_InputEntry } = props;
+  const { lineNo, block, dom, setDom, refBlock } = props;
+  const ref_InputEntry = useRef(null);
   const refPopupMenu = useRef(null);
-  // const ref_InputEntry = useRef(null);
   const [showPopup, setShowPopup] = useState(false);
   const [curCaretPos, setCurCaretPos] = useState({ top: 0, left: 0 });
-  const [rawText, setRawText] = useState(currentRawData);
-  const [innerText, setInnerText] = useState(currentRawData);
-  const [initialText, setInitialText] = useState(children);
-  const [caret, setCaret] = useState(1);
+  const [rawText, setRawText] = useState(block.value);
+  const [innerText, setInnerText] = useState(block.value);
 
   function getPositionAfterOneChar(e) {
     const selection = window.getSelection();
@@ -72,7 +72,7 @@ const _InputEntry = (props) => {
   }
 
   function getPositionAtNoChar(e) {
-    const rect = ref_InputEntry.current?.getBoundingClientRect();
+    const rect = refBlock.current?.getBoundingClientRect();
     if (!rect) {
       console.log('rect is null');
       return;
@@ -81,41 +81,32 @@ const _InputEntry = (props) => {
   }
 
   // useEffect(() => {
-  //   function determineClosePopup(e) {
-  //     if (showPopup === false || !refPopupMenu?.current) {
-  //       console.log(showPopup);
-  //       console.log(refPopupMenu.current);
-  //       console.log('somthing wrong');
-  //       return
-  //     }
-  //     const curPopupPos = refPopupMenu.current?.getBoundingClientRect();
-  //     if (!curPopupPos) {
-  //       console.log('!curPopupPos');
-  //       return;
-  //     }
-  //     if (e.offsetX < curPopupPos.left
-  //       || e.offsetX > curPopupPos.left + getComputedStyle(refPopupMenu.current).width.split("px")[0]
-  //       || e.offsetY < curPopupPos.top
-  //       || e.offsetY > curPopupPos.top + getComputedStyle(refPopupMenu.current).height.split("px")[0]) {
-  //       setShowPopup(prev => false);
+  //   /*
+  //   https://stackoverflow.com/questions/32553158/detect-click-outside-react-component
+  //   */
+  //   function handleClickOutside(event) {
+  //     if (refBlock.current && !refBlock.current.contains(event.target)) {
+  //       // alert("You clicked outside of me!");
+  //       // setIntermediateData(({ lastCurLine: lineNo, lastInput: refBlock.current.innerText }))
+  //       // save();
+  //       setShowPopup(false);
+  //       // setCurrentRawData(rawText);
   //     }
   //   }
-
-  //   document.addEventListener('click', determineClosePopup);
-
+  //   document.addEventListener('click', handleClickOutside);
   //   return () => {
-  //     document.removeEventListener('click', determineClosePopup);
+  //     document.removeEventListener('click', handleClickOutside);
   //   }
-  // }, [showPopup]);
+  // }, [])
 
   useEffect(() => {
     /*
     https://stackoverflow.com/questions/32553158/detect-click-outside-react-component
     */
     function handleClickOutside(event) {
-      if (ref_InputEntry.current && !ref_InputEntry.current.contains(event.target)) {
+      if (refPopupMenu.current && !refPopupMenu.current.contains(event.target)) {
         // alert("You clicked outside of me!");
-        // setIntermediateData(({ lastCurLine: lineNo, lastInput: ref_InputEntry.current.innerText }))
+        // setIntermediateData(({ lastCurLine: lineNo, lastInput: refBlock.current.innerText }))
         // save();
         setShowPopup(false);
         // setCurrentRawData(rawText);
@@ -125,14 +116,16 @@ const _InputEntry = (props) => {
     return () => {
       document.removeEventListener('click', handleClickOutside);
     }
-  }, [lineNo, setDom, rawText])
+  }, [])
 
   useEffect(() => {
     if (rawText.length === 0) {
       ref_InputEntry.current.focus();
       return;
     }
-
+    if (lineNo !== dom.curLine.value) {
+      return;
+    }
     const target = ref_InputEntry.current;
     if (!target.childNodes || !target.childNodes[0]) {
       return;
@@ -152,36 +145,34 @@ const _InputEntry = (props) => {
   return (
     <>
       <_InputEntryWithoutLogic
+        dom={dom}
+        lineNo={lineNo}
         contentEditable
         suppressContentEditableWarning
         ref={ref_InputEntry}
         onKeyDown={(e) => {
-          if (rawText.length > 0) {
+          if (innerText.length > 0) {
             getPositionAfterOneChar(e);
           } else {
             getPositionAtNoChar(e);
           }
           if (e.key == '/') {
-            setShowPopup(prev => true);
+            setShowPopup(true);
             return;
           }
           setShowPopup(false);
-          const caretPosition = getCaretPosition(ref_InputEntry.current);
+          const caretPosition = getCaretPosition(refBlock.current);
           if (e.key == 'Enter' || e.key == "ArrowUp" || e.key == "ArrowDown") {
-            setShowPopup(prev => false);
-            const newRawText = e.target.innerText;
+            setShowPopup(false);
+            const curText = e.target.innerText;
+            console.log(curText);
             switch (e.key) {
               case "Enter":
                 e.preventDefault();
                 /* Save current value and generate new div, and go to it */
                 setDom(prev => ({
-                  blockData: prev.blockData
-                    .map((el, i) => {
-                      if (i === prev.curLine.value) {
-                        return newRawText
-                      }
-                      return el;
-                    }).concat(""),
+                  blocks: prev.blocks.map((block, i) => i === prev.curLine.value ? { blockType: "text", value: curText } : block)
+                    .concat([textBlockInitValue]),
                   curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" },
                   lastClickRange: caretPosition
                 }));
@@ -193,12 +184,7 @@ const _InputEntry = (props) => {
                   return;
                 }
                 setDom(prev => ({
-                  blockData: prev.blockData.map((el, i) => {
-                    if (i === prev.curLine.value) {
-                      return newRawText
-                    }
-                    return el;
-                  }),
+                  blocks: prev.blocks.map((block, i) => i === prev.curLine.value ? { blockType: "text", value: curText } : block),
                   curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" },
                   lastClickRange: caretPosition
                 }));
@@ -206,16 +192,11 @@ const _InputEntry = (props) => {
               case "ArrowDown":
                 e.preventDefault();
                 /* check if last line */
-                if (dom.curLine.value === dom.blockData.length - 1) {
+                if (dom.curLine.value === dom.blocks.length - 1) {
                   return;
                 }
                 setDom(prev => ({
-                  blockData: prev.blockData.map((el, i) => {
-                    if (i === prev.curLine.value) {
-                      return newRawText
-                    }
-                    return el;
-                  }),
+                  blocks: prev.blocks.map((block, i) => i === prev.curLine.value ? { blockType: "text", value: curText } : block),
                   curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" },
                   lastClickRange: caretPosition
                 }));
@@ -239,25 +220,23 @@ const _InputEntry = (props) => {
         onInput={(e) => {
           console.log(e);
           setInnerText(e.target.innerText);
-          // console.log(e.target.innerText);
-          // setRawText(e.target.innerText);
-          // setIntermediateData(prev => ({ lastCurLine: lineNo, lastInput: e.target.innerText }))
         }}
-      >{rawText}</_InputEntryWithoutLogic>
-      < PopupMenu position={curCaretPos} innerRef={refPopupMenu} showPopup={showPopup} />
+      >{rawText}</_InputEntryWithoutLogic >
+      <PopupMenu position={curCaretPos} innerRef={refPopupMenu} showPopup={showPopup} />
     </>
   )
 }
 
-const InputEntryWithoutLogic = styled.div`
+const TextBlockWithoutLogic = styled.div`
   border: 1px solid black;
+  width: 100%;
 `
-const InputEntry = (props) => {
+const TextBlock = (props) => {
   return (
-    <InputEntryWithoutLogic>
+    <TextBlockWithoutLogic>
       <_InputEntry {...props} />
-    </InputEntryWithoutLogic>
+    </TextBlockWithoutLogic>
   )
 }
 
-export default InputEntry;
+export default TextBlock;

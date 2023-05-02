@@ -2,90 +2,24 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { CurrentTitle, Dots, ExportButton, LastEdit, LeftTitleMenuContainer, PopupMenu, RightTitleMenuContainer, SideBar, SideBarToggleButton, Spacer, Title, TitleBar } from '@/components/basicElements'
-import { Container, ContentContainer, } from '@/components/container'
-import InputEntry from '@/components/InputEntry';
+import { Container, ContentContainer, } from '@/components/ContentContainer'
+import InputBlock from '@/components/InputEntry';
 import { useEffect, useRef, useState } from 'react'
 import { v4 } from "uuid";
 import { useAnimate } from 'framer-motion'
+import TextBlock from '@/components/blocks/TextBlock';
+import { textBlockInitValue } from '@/etc/initValues'
 
 export default function Home() {
   const refContentContainer = useRef(null);
   const [showSideBar, setShowSideBar] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Current Title");
   const [lastEdit, setLastEdit] = useState(new Date());
-  const [dom, setDom] = useState({ blockData: [""], curLine: { value: 0, lastArrowAction: "" }, lastClickRange: 0 });
-  // const [curLine, setCurLine] = useState({ value: 0, lastAction: "" });
-  const [clickOutsideOfblock, setClickOutsideOfblock] = useState(false);
-  const [newestLine, setNewestLine] = useState(0);
-
-  // useState(() => {
-  //   console.log(intermediateData);
-  // }, [intermediateData])
-
-  // useEffect(() => {
-  //   const { value, lastArrowAction } = dom.curLine;
-  //   console.log(`curLine is changed to ${value}`)
-  //   // document.getElementById('aa').
-  //   if (lastArrowAction === "DOWN" || lastArrowAction === "ENTER") {
-  //     refContentContainer.current.children[value].firstChild?.focus();
-  //   }
-
-  //   if (lastArrowAction === "UP") {
-  //     console.log('value', value);
-  //     const target = refContentContainer.current.childNodes[value].firstChild;
-  //     const selection = window.getSelection();
-  //     const range = document.createRange();
-  //     // move caret to the end of the line
-  //     range.setStart(target.childNodes[0], 2)
-  //     range.collapse(true);
-
-  //     selection.removeAllRanges();
-  //     selection.addRange(range);
-
-  //     target.focus();
-  //     // select the range
-  //     console.log('worked');
-  //   }
-  //   // refContentContainer.current.children[curLine].focus();
-  // }, [dom.curLine]);
-
-  // useEffect(() => {
-  //   function handleKeydown(e) {
-  //     if (e.key == "ArrowDown") {
-  //       setCurLine(curLine + 1)
-  //     }
-  //     if (e.key == "ArrowUp") {
-  //       setCurLine(curLine - 1)
-  //     }
-  //   }
-  //   document.addEventListener("keydown", handleKeydown);
-
-  //   return () => {
-  //     document.removeEventListener("keydown", handleKeydown);
-  //   }
-  // }, [curLine])
-
-  // useEffect(() => {
-  //   const { lastCurLine, data } = intermediateData;
-  //   console.log('lastCurLine', lastCurLine, 'dom.curLine.value', dom.curLine.value);
-  //   if (lastCurLine !== dom.curLine.value) {
-  //     const { rawData, curLine } = dom;
-  //     console.log(44)
-  //     setDom({
-  //       rawData: rawData.map((rawText, i) => {
-  //         if (i === lastCurLine) {
-  //           return data;
-  //         }
-  //         return rawText;
-  //       }),
-  //       curLine: curLine
-  //     })
-  //     setIntermediateData({ ...intermediateData, lastCurLine: dom.curLine.value })
-  //     // refContentContainer.current.children[lastCurLine].innerText = data;
-  //   }
-
-  // }, [intermediateData]);
-
+  const [dom, setDom] = useState({
+    blocks: [textBlockInitValue],
+    curLine: { value: 0, lastArrowAction: "" },
+    lastClickRange: 0
+  });
 
   return (
     <>
