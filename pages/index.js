@@ -13,7 +13,7 @@ export default function Home() {
   const [showSideBar, setShowSideBar] = useState(false);
   const [currentTitle, setCurrentTitle] = useState("Current Title");
   const [lastEdit, setLastEdit] = useState(new Date());
-  const [dom, setDom] = useState({ blockData: [""], curLine: { value: 0, lastArrowAction: "" } });
+  const [dom, setDom] = useState({ blockData: [""], curLine: { value: 0, lastArrowAction: "" }, lastClickRange: 0 });
   // const [curLine, setCurLine] = useState({ value: 0, lastAction: "" });
   const [clickOutsideOfblock, setClickOutsideOfblock] = useState(false);
   const [newestLine, setNewestLine] = useState(0);

@@ -4,6 +4,7 @@ import { v4 } from "uuid";
 import { memo, useEffect, useRef, useState } from 'react';
 import { AnimatePresence } from "framer-motion";
 import { motion } from "framer-motion";
+import getCaretPosition from "@/utils/getCaretPosition";
 
 const PopupMenuWithoutLogic = styled(motion.div)`
   display: ${props => props.show === "true" ? 'block' : 'none'};
@@ -108,19 +109,6 @@ const _InputEntry = (props) => {
   // }, [showPopup]);
 
   useEffect(() => {
-    // function save(actionType) {
-    //   setDom(prev => ({
-    //     blockData: prev.blockData.map((e, i) => {
-    //       if (i === lineNo) {
-    //         return innerText;
-    //       }
-    //       else {
-    //         return e;
-    //       }
-    //     }),
-    //     curLine: { value: lineNo, type: "ARROW" },
-    //   }))
-    // }
     /*
     https://stackoverflow.com/questions/32553158/detect-click-outside-react-component
     */
@@ -139,37 +127,27 @@ const _InputEntry = (props) => {
     }
   }, [lineNo, setDom, rawText])
 
-  // useEffect(() => {
-  //   ref_InputEntry.current.innerText = children
-  // }, [children])
+  useEffect(() => {
+    if (rawText.length === 0) {
+      ref_InputEntry.current.focus();
+      return;
+    }
 
+    const target = ref_InputEntry.current;
+    if (!target.childNodes || !target.childNodes[0]) {
+      return;
+    }
+    const selection = window.getSelection();
+    const range = document.createRange();
+    const initialCaretPosition = dom.lastClickRange;
+    const correctedCaretPosition = target.childNodes[0].textContent.length < initialCaretPosition ? target.childNodes[0].textContent.length : initialCaretPosition;
 
-  // useEffect(() => {
-  //   // ref_InputEntry.current.innerText = rawText;
-  //   if (rawText.length === 0) {
-  //     console.log(111);
-  //     // ref_InputEntry.current.focus();
-  //     return;
-  //   }
-
-  //   const target = ref_InputEntry.current;
-  //   if (!target.childNodes || !target.childNodes[0]) {
-  //     return;
-  //   }
-  //   console.log('start');
-  //   const selection = window.getSelection();
-  //   const range = document.createRange();
-
-  //   // console.log(selection.anchorNode);
-
-
-  //   range.setStart(target.childNodes[0], 1);
-  //   range.collapse(true);
-  //   selection.removeAllRanges();
-  //   selection.addRange(range);
-  //   console.log('worked');
-  //   target.focus();
-  // }, [rawText])
+    range.setStart(target.childNodes[0], correctedCaretPosition);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    target.focus();
+  }, [])
 
   return (
     <>
@@ -188,6 +166,7 @@ const _InputEntry = (props) => {
             return;
           }
           setShowPopup(false);
+          const caretPosition = getCaretPosition(ref_InputEntry.current);
           if (e.key == 'Enter' || e.key == "ArrowUp" || e.key == "ArrowDown") {
             setShowPopup(prev => false);
             const newRawText = e.target.innerText;
@@ -203,7 +182,8 @@ const _InputEntry = (props) => {
                       }
                       return el;
                     }).concat(""),
-                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" }
+                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "ENTER" },
+                  lastClickRange: caretPosition
                 }));
                 break;
               case "ArrowUp":
@@ -219,7 +199,8 @@ const _InputEntry = (props) => {
                     }
                     return el;
                   }),
-                  curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" }
+                  curLine: { value: prev.curLine.value - 1, lastArrowAction: "UP" },
+                  lastClickRange: caretPosition
                 }));
                 break;
               case "ArrowDown":
@@ -235,7 +216,8 @@ const _InputEntry = (props) => {
                     }
                     return el;
                   }),
-                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" }
+                  curLine: { value: prev.curLine.value + 1, lastArrowAction: "DOWN" },
+                  lastClickRange: caretPosition
                 }));
                 break;
               default:
