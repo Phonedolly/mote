@@ -52,7 +52,7 @@ export const ContentContainer = (props) => {
               onClick={(e) => {
                 /* save current input block and set new block line */
                 setDom(prev => ({
-                  blockData: prev.blockData.map((el, j) => (j === dom.curLine.value ? prev.blockData[i] = ref_InputEntry.current.innerText : el
+                  blockData: prev.blockData.map((el, j) => (j === dom.curLine.value ? ref_InputEntry.current.innerText : el
                   )),
                   curLine: { value: i },
                 }))
