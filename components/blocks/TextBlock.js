@@ -119,11 +119,11 @@ const _InputEntry = (props) => {
   }, [])
 
   useEffect(() => {
-    if (rawText.length === 0) {
-      ref_InputEntry.current.focus();
+    if (lineNo !== dom.curLine.value) {
       return;
     }
-    if (lineNo !== dom.curLine.value) {
+    if (rawText.length === 0) {
+      ref_InputEntry.current.focus();
       return;
     }
     const target = ref_InputEntry.current;
@@ -140,7 +140,7 @@ const _InputEntry = (props) => {
     selection.removeAllRanges();
     selection.addRange(range);
     target.focus();
-  }, [])
+  }, [dom.curLine.value])
 
   return (
     <>
