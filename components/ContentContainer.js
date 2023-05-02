@@ -2,7 +2,6 @@ import styled from "styled-components";
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { v4 } from "uuid";
 import { useEffect, useRef, useState } from "react";
-import InputBlock from "./InputEntry";
 import getCaretPosition from "@/utils/getCaretPosition";
 import Block from "./blocks/Block";
 

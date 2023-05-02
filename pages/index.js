@@ -3,7 +3,6 @@ import Image from 'next/image'
 import { Noto_Sans_KR, Outfit } from 'next/font/google'
 import { CurrentTitle, Dots, ExportButton, LastEdit, LeftTitleMenuContainer, PopupMenu, RightTitleMenuContainer, SideBar, SideBarToggleButton, Spacer, Title, TitleBar } from '@/components/basicElements'
 import { Container, ContentContainer, } from '@/components/ContentContainer'
-import InputBlock from '@/components/InputEntry';
 import { useEffect, useRef, useState } from 'react'
 import { v4 } from "uuid";
 import { useAnimate } from 'framer-motion'
